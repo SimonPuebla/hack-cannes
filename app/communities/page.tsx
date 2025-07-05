@@ -5,6 +5,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ArrowRight } from "lucide-react"
 import { useRouter } from "next/navigation"
 
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+
+
 const communities = [
   {
     name: "Crecimiento",
@@ -29,8 +32,8 @@ export default function CommunitiesPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-lg">
       <div className="flex flex-col items-center space-y-8">
-        <Logo />
-
+        <Logo />               
+        <ConnectButton showBalance={false} />
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold font-serif">Choose a Community</h1>
           <p className="text-[#2e2a4d]/70">Select which community you'd like to join</p>

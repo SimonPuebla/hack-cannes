@@ -12,6 +12,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+
+
 export default function ApplyCrecimientoPage() {
   const [subname, setSubname] = useState("")
   const [reason, setReason] = useState("")

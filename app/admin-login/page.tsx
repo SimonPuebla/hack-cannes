@@ -1,25 +1,46 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Logo } from "@/components/logo"
 import { CustomButton } from "@/components/ui/custom-button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Wallet, ArrowLeft, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount } from "wagmi"
+
+
 export default function AdminLoginPage() {
   const [isConnecting, setIsConnecting] = useState(false)
   const router = useRouter()
+  const { isConnected } = useAccount();
 
-  const connectAdminWallet = async () => {
+  useEffect(() => {
+    if (isConnected) {
+      router.push("/proof");
+    }
+  }, [isConnected, router]);
+
+
+  const connectWallet = async () => {
     setIsConnecting(true)
 
-    // Simulate admin wallet connection
+    // Simulate wallet connection
     setTimeout(() => {
       setIsConnecting(false)
       router.push("/company-check")
     }, 2000)
   }
+
+  useEffect(() => {
+    if (isConnected) {
+      router.push("/company-check");
+    }
+  }, [isConnected, router]);
+
+
+
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-lg">
@@ -38,10 +59,8 @@ export default function AdminLoginPage() {
               <h2 className="text-2xl font-bold font-serif">Community Hub Portal</h2>
               <p className="text-[#2e2a4d]/70">Sign in with your wallet to manage your community's credentials</p>
 
-              <CustomButton onClick={connectAdminWallet} className="w-full" size="lg" disabled={isConnecting}>
-                <Wallet className="mr-2 h-5 w-5" />
-                {isConnecting ? "Connecting..." : "Sign in with wallet"}
-              </CustomButton>
+              <ConnectButton showBalance={false} />
+
             </div>
           </CardContent>
         </Card>

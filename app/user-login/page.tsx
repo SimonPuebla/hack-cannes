@@ -1,15 +1,27 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Logo } from "@/components/logo"
-import { CustomButton } from "@/components/ui/custom-button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Wallet, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useAccount } from 'wagmi';
+
+
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+
 
 export default function UserLoginPage() {
   const [isConnecting, setIsConnecting] = useState(false)
   const router = useRouter()
+  const { isConnected } = useAccount();
+
+  useEffect(() => {
+    if (isConnected) {
+      router.push("/proof");
+    }
+  }, [isConnected, router]);
+
 
   const connectWallet = async () => {
     setIsConnecting(true)
@@ -20,6 +32,7 @@ export default function UserLoginPage() {
       router.push("/proof")
     }, 2000)
   }
+
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-lg">
@@ -37,10 +50,12 @@ export default function UserLoginPage() {
               <h2 className="text-2xl font-bold font-serif">Connect Wallet</h2>
               <p className="text-[#2e2a4d]/70">Connect your wallet to get started with your anonymous identity</p>
 
-              <CustomButton onClick={connectWallet} className="w-full" size="lg" disabled={isConnecting}>
+              <ConnectButton showBalance={false} />
+
+              {/* <CustomButton onClick={connectWallet} className="w-full" size="lg" disabled={isConnecting}>
                 <Wallet className="mr-2 h-5 w-5" />
                 {isConnecting ? "Connecting..." : "Connect Wallet"}
-              </CustomButton>
+              </CustomButton> */}
             </div>
           </CardContent>
         </Card>

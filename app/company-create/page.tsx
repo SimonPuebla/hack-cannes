@@ -1,8 +1,15 @@
+// ENS Minting Logic Integrated into Community Creation
+
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+
+import { useWalletClient, usePublicClient } from "wagmi"
+import { keccak256, toBytes, getContract } from "viem"
+
+import { controllerAbiJson } from "./controllerAbi"
+
 import { Logo } from "@/components/logo"
 import { CustomButton } from "@/components/ui/custom-button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -10,14 +17,20 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Upload } from "lucide-react"
-import { useRouter } from "next/navigation"
 
 export default function CompanyCreatePage() {
   const [communityName, setCommunityName] = useState("")
   const [description, setDescription] = useState("")
   const [logo, setLogo] = useState<File | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState("")
+
   const router = useRouter()
+  const { data: walletClient } = useWalletClient()
+  const publicClient = usePublicClient()
+
+  const controllerAddress = "0xfb3cE5D01e0f33f41DbB39035dB9745962F1f968"
+  const controllerAbi = controllerAbiJson
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -28,12 +41,83 @@ export default function CompanyCreatePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setError("")
 
-    // Simulate API call to create community
-    setTimeout(() => {
+    try {
+      if (!walletClient || !publicClient) throw new Error("Wallet not connected")
+
+      const ensController = getContract({
+        address: controllerAddress,
+        abi: controllerAbi,
+        client: { public: publicClient, wallet: walletClient },
+      })
+
+      console.log("ENS Controller Contract:", ensController)
+
+      const label = communityName.toLowerCase().replace(/[^a-z0-9-]/g, "")
+      const duration = 31556952 // 1 year
+      const secret = keccak256(toBytes("anon-secret"))
+      const address = walletClient.account.address
+
+      const registration = {
+        name: label,
+        owner: address,
+        duration,
+        secret,
+        resolver: "0x0000000000000000000000000000000000000000",
+        data: [],
+        reverseRecord: true,
+        ownerControlledFuses: 0
+      }
+
+      console.log("Parameters for makeCommitment:", registration)
+
+      // console.log("Calling makeCommitment...");
+      // const commitment = await ensController.read.makeCommitment([
+      //   {
+      //     label: "crecimiento",
+      //     owner: address,
+      //     duration,
+      //     secret,
+      //     resolver: "0x0000000000000000000000000000000000000000",
+      //     data: [],
+      //     reverseRecord: true, // ✅ must be uint8: 0 or 1
+      //     referrer: "0x0000000000000000000000000000000000000000000000000000000000000000"
+      //   }
+      // ]);
+      // console.log("Commitment received:", commitment);
+      // 
+      // if (!commitment) {
+      //   throw new Error("makeCommitment returned no data");
+      // }
+
+      // console.log("Calling commit...");
+      // await ensController.write.commit([commitment]);
+      // console.log("Commitment sent. Waiting 60 seconds...");
+
+      // await new Promise((res) => setTimeout(res, 65000));
+
+      // console.log("Calling rentPrice...");
+      // const priceResult = await ensController.read.rentPrice(["crecimiento", duration]) as bigint;
+
+      // console.log("Price Result:", priceResult);
+
+      // console.log("Calling register...");
+      // await ensController.write.register([registration], {
+      //   value: priceResult
+      // });
+      // console.log("ENS name minted");
+
+      // Simulate saving community to backend
+      setTimeout(() => {
+        router.push("/admin-dashboard")
+      }, 2000)
+    } catch (err: any) {
+      console.error("Error during ENS registration:", err)
+      setError(err.message || "Something went wrong")
+    } finally {
       setIsSubmitting(false)
-      router.push("/admin-dashboard")
-    }, 2000)
+    }
   }
 
   return (
@@ -50,15 +134,17 @@ export default function CompanyCreatePage() {
           <CardContent className="p-8">
             <div className="text-center space-y-2 mb-6">
               <h2 className="text-2xl font-bold font-serif">New Community Hub</h2>
-              <p className="text-[#2e2a4d]/70">Set up your community to manage member credentials</p>
+              <p className="text-[#2e2a4d]/70">
+                Set up your community and mint its ENS name
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="community-name">Community Name</Label>
+                <Label htmlFor="community-name">Community Name (.eth)</Label>
                 <Input
                   id="community-name"
-                  placeholder="Enter your community name"
+                  placeholder="anonibara"
                   value={communityName}
                   onChange={(e) => setCommunityName(e.target.value)}
                   required
@@ -69,7 +155,7 @@ export default function CompanyCreatePage() {
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
-                  placeholder="Describe your community and its purpose..."
+                  placeholder="Describe your community..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
@@ -92,13 +178,15 @@ export default function CompanyCreatePage() {
                 {logo && <p className="text-sm text-[#2e2a4d]/70">Selected: {logo.name}</p>}
               </div>
 
+              {error && <p className="text-sm text-red-500">{error}</p>}
+
               <CustomButton
                 type="submit"
                 className="w-full"
                 size="lg"
                 disabled={isSubmitting || !communityName || !description}
               >
-                {isSubmitting ? "Creating Community..." : "Create Community Hub"}
+                {isSubmitting ? "Registering ENS..." : "Create Community Hub & Mint ENS"}
               </CustomButton>
             </form>
           </CardContent>
